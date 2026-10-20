@@ -50,6 +50,7 @@ jobs:
       env:
         OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
         GLADOS_COOKIES: op://bijq6bcgreqllzb6dttxtra3sq/glados-cookie/credential
+        GLADOS_WEBHOOK_URL: op://bijq6bcgreqllzb6dttxtra3sq/glados-hookdeck-url/credential
 
     # 执行 签到脚本
     - name: Running checkin

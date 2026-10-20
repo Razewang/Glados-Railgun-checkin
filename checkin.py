@@ -554,6 +554,26 @@ class ServerChanBackend(PushBackend):
             return False
 
 
+class WebhookBackend(PushBackend):
+    """通用 Webhook 后端：POST JSON {title, content}（如 Hookdeck → Reminder）"""
+
+    name = "Webhook"
+
+    def __init__(self, url: str):
+        self.url = url
+
+    def send(self, title: str, payload: dict) -> bool:
+        try:
+            resp = requests.post(self.url, json={"title": title, "content": self._render(payload)}, timeout=15)
+            if resp.ok:
+                return True
+            logger.error(f"{LogEmoji.ERROR} [{self.name}] 推送失败: HTTP {resp.status_code}")
+            return False
+        except Exception as e:
+            logger.error(f"{LogEmoji.ERROR} [{self.name}] 推送失败: {type(e).__name__}")
+            return False
+
+
 class PushService:
     """推送服务：聚合多个后端，向全部已配置后端发送（都发）"""
 
@@ -564,6 +584,8 @@ class PushService:
                 self.backends.append(PushDeerBackend(config.push_key))
             if getattr(config, "serverchan_key", ""):
                 self.backends.append(ServerChanBackend(config.serverchan_key))
+        if os.environ.get("GLADOS_WEBHOOK_URL", "").strip():
+            self.backends.append(WebhookBackend(os.environ["GLADOS_WEBHOOK_URL"].strip()))
 
     def send(self, title: str, payload: dict) -> bool:
         """向所有已配置后端发送推送，只要有一个成功即视为成功"""
